@@ -1,0 +1,3 @@
+import {z} from 'zod';
+import {db,owner,writeGuard,readJson,json,failure} from '@/lib/server';
+export async function PUT(req:Request){try{writeGuard(req);const p=z.object({name:z.string().min(1).max(80),threshold:z.number().int().min(10).max(80),goal:z.string().min(1).max(300),completed:z.array(z.string().max(80)).max(100)}).parse(await readJson(req));await db().prepare('INSERT INTO profiles (owner,name,threshold,goal,completed) VALUES (?,?,?,?,?) ON CONFLICT(owner) DO UPDATE SET name=excluded.name,threshold=excluded.threshold,goal=excluded.goal,completed=excluded.completed').bind(owner(req),p.name,p.threshold,p.goal,JSON.stringify(p.completed)).run();return json(p);}catch(e){return failure(e);}}

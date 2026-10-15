@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {RollingCapture} from '../lib/capture.ts';
+let active=0;class FakeRecorder{static isTypeSupported(){return true;}state='inactive';mimeType='video/webm';start(){this.state='recording';active++;}stop(){assert.equal(this.state,'recording');this.state='inactive';active--;setTimeout(()=>{this.ondataavailable({data:new Blob(['valid-container'])});this.onstop();},2);}}
+globalThis.MediaRecorder=FakeRecorder;
+test('simultaneous mark and stop do not spawn duplicate recorders or leak tracks',async()=>{let stopped=0;const track={addEventListener(){},stop(){stopped++;}};const stream={getVideoTracks(){return [track];},getTracks(){return [track];}};const c=new RollingCapture(stream,()=>{});c.start();c.started-=16000;const [marked,stoppedParts]=await Promise.all([c.mark(),c.stop()]);assert.equal(active,0);assert.equal(stopped,1);assert.equal(marked.length,1);assert.equal(stoppedParts.length,1);assert.ok(marked[0].duration>=16);});

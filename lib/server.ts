@@ -1,0 +1,12 @@
+import { env } from 'cloudflare:workers';
+export const db=()=>{const d=(env as any).DB;if(!d)throw new Error('Session storage is unavailable. Please try again.');return d as D1Database;};
+export const bucket=()=>{const b=(env as any).BUCKET;if(!b)throw new Error('Clip storage is unavailable. Please try again.');return b as R2Bucket;};
+export function owner(req:Request){const u=req.headers.get('oai-authenticated-user-id');if(!u)throw new HttpError(401,'Sign in to save and view your sessions.');return u;}
+export function writeGuard(req:Request){owner(req);const origin=req.headers.get('origin');if(origin&&origin!==new URL(req.url).origin)throw new HttpError(403,'Cross-origin requests are not allowed.');}
+export class HttpError extends Error {constructor(public status:number,message:string){super(message);}}
+export const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
+export function failure(e:unknown){console.error('NextPlay request failed',e instanceof Error?e.message:'unknown');if(e instanceof HttpError)return json({error:e.message},e.status);if(e&&typeof e==='object'&&'issues' in e)return json({error:'Invalid data. Check timestamps, required fields and supported values.'},400);return json({error:'Could not complete this request. Your input is still here; please try again.'},503);}
+export async function readJson(req:Request,max=1500000){if(Number(req.headers.get('content-length'))>max)throw new HttpError(413,'This data file is too large.');if(!req.body)throw new HttpError(400,'No data provided.');const reader=req.body.getReader(),decoder=new TextDecoder();let s='',bytes=0;while(true){const {done,value}=await reader.read();if(done)break;bytes+=value.byteLength;if(bytes>max){await reader.cancel();throw new HttpError(413,'This data file is too large.');}s+=decoder.decode(value,{stream:true});}s+=decoder.decode();try{return JSON.parse(s);}catch{throw new HttpError(400,'This file is not valid JSON.');}}
+export function decode(row:any){return {...row,createdAt:row.created_at,events:JSON.parse(row.events),review:JSON.parse(row.review),parts:JSON.parse(row.parts),ai:row.ai?JSON.parse(row.ai):null};}
+export async function ownedSession(req:Request,id:string){const row=await db().prepare('SELECT * FROM sessions WHERE id = ? AND owner = ?').bind(id,owner(req)).first();if(!row)throw new HttpError(404,'Session not found.');return decode(row);}
+export function aiConfig(){return {key:(env as any).OPENAI_API_KEY as string|undefined,model:(env as any).OPENAI_MODEL as string|undefined};}
