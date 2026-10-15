@@ -1,17 +1,25 @@
 # NextPlay OSRS Coach
 
-Gameplay session review application with telemetry timelines, browser recording, and event-based coaching.
+I built this version of NextPlay around reviewing completed OSRS fights. I wanted a place to bring together event logs, recordings, and practice goals so I could see what to work on next.
 
-## Technology
+I included a session library, a health timeline, browser recording, event validation, and recurring pattern tracking. Event logs drive the deterministic review rules. Optional AI review can use event data or sampled video frames; video alone does not establish every combat event.
 
-TypeScript, React, Cloudflare D1/R2.
+## Built with
 
-## Run locally
+I used TypeScript and React, with Cloudflare D1 for session data and R2 for clips.
 
-Use Node.js 22.13 or later and pnpm. Install dependencies with `pnpm install`, configure your own local settings from `.env.example`, and run `pnpm dev`. See the project guide for database, object storage, telemetry, and optional model integration setup.
+## Inside the project
 
-## Portfolio snapshot
+* `app/`: the application routes and interface.
+* `lib/`: review logic and shared services.
+* `integrations/`: telemetry integration files.
+* `db/`: database definitions.
+* `tests/`: review and capture checks.
 
-This repository contains a source snapshot of a personal project. Personal records, credentials, browser sessions, local databases, and generated output are excluded. Use your own configuration and fictional data when evaluating it. Some integrations require external accounts or additional setup. This is a development project, with feature limitations documented in the source and guides.
+## Running it
 
-See [the project guide](PROJECT_GUIDE.md) for implementation details and earlier development notes. Verification claims in that guide describe the original working copy; they are not a fresh end-to-end test of this portfolio snapshot.
+I use Node.js 22.13 or later and pnpm. I install dependencies with `pnpm install`, set up my own values from `.env.example`, and start development with `pnpm dev`. Database and clip storage configuration are covered in the project guide.
+
+## More detail
+
+* [Setup and review limitations](PROJECT_GUIDE.md)
